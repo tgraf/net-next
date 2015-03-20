@@ -226,7 +226,7 @@ static inline struct fib_table *fib_new_table(struct net *net, u32 id)
 }
 
 static inline int fib_lookup(struct net *net, const struct flowi4 *flp,
-			     struct fib_result *res)
+			     struct fib_result *res, u8 reason)
 {
 	struct fib_table *tb;
 	int err = -ENETUNREACH;
@@ -249,16 +249,17 @@ void __net_exit fib4_rules_exit(struct net *net);
 struct fib_table *fib_new_table(struct net *net, u32 id);
 struct fib_table *fib_get_table(struct net *net, u32 id);
 
-int __fib_lookup(struct net *net, struct flowi4 *flp, struct fib_result *res);
+int __fib_lookup(struct net *net, struct flowi4 *flp, struct fib_result *res,
+		 u8 reason);
 
 static inline int fib_lookup(struct net *net, struct flowi4 *flp,
-			     struct fib_result *res)
+			     struct fib_result *res, u8 reason)
 {
 	struct fib_table *tb;
 	int err;
 
 	if (net->ipv4.fib_has_custom_rules)
-		return __fib_lookup(net, flp, res);
+		return __fib_lookup(net, flp, res, reason);
 
 	rcu_read_lock();
 

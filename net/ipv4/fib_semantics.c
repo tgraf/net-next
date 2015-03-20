@@ -621,7 +621,7 @@ static int fib_check_nh(struct fib_config *cfg, struct fib_info *fi,
 			/* It is not necessary, but requires a bit of thinking */
 			if (fl4.flowi4_scope < RT_SCOPE_LINK)
 				fl4.flowi4_scope = RT_SCOPE_LINK;
-			err = fib_lookup(net, &fl4, &res);
+			err = fib_lookup(net, &fl4, &res, FIB_REASON_OUTPUT);
 			if (err) {
 				rcu_read_unlock();
 				return err;
