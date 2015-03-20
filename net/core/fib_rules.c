@@ -173,7 +173,8 @@ void fib_rules_unregister(struct fib_rules_ops *ops)
 EXPORT_SYMBOL_GPL(fib_rules_unregister);
 
 static int fib_rule_match(struct fib_rule *rule, struct fib_rules_ops *ops,
-			  struct flowi *fl, int flags)
+			  struct flowi *fl, int flags,
+			  struct fib_lookup_arg *arg)
 {
 	int ret = 0;
 
@@ -184,6 +185,9 @@ static int fib_rule_match(struct fib_rule *rule, struct fib_rules_ops *ops,
 		goto out;
 
 	if ((rule->mark ^ fl->flowi_mark) & rule->mark_mask)
+		goto out;
+
+	if (rule->reason && arg->reason && !(arg->reason & rule->reason))
 		goto out;
 
 	ret = ops->match(rule, fl, flags);
@@ -201,7 +205,7 @@ int fib_rules_lookup(struct fib_rules_ops *ops, struct flowi *fl,
 
 	list_for_each_entry_rcu(rule, &ops->rules_list, list) {
 jumped:
-		if (!fib_rule_match(rule, ops, fl, flags))
+		if (!fib_rule_match(rule, ops, fl, flags, arg))
 			continue;
 
 		if (rule->action == FR_ACT_GOTO) {
@@ -367,6 +371,15 @@ static int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr* nlh)
 			unresolved = 1;
 	} else if (rule->action == FR_ACT_GOTO)
 		goto errout_free;
+
+	if (tb[FRA_REASON]) {
+		u32 reason = nla_get_u32(tb[FRA_REASON]);
+		if (!reason || reason > FIB_REASON_MAX) {
+			err = -ERANGE;
+			goto errout_free;
+		}
+		rule->reason = reason;
+	}
 
 	err = ops->configure(rule, skb, frh, tb);
 	if (err < 0)
@@ -591,7 +604,9 @@ static int fib_nl_fill_rule(struct sk_buff *skb, struct fib_rule *rule,
 	    ((rule->mark_mask || rule->mark) &&
 	     nla_put_u32(skb, FRA_FWMASK, rule->mark_mask)) ||
 	    (rule->target &&
-	     nla_put_u32(skb, FRA_GOTO, rule->target)))
+	     nla_put_u32(skb, FRA_GOTO, rule->target)) ||
+	    (rule->reason &&
+	     nla_put_u32(skb, FRA_REASON, rule->reason)))
 		goto nla_put_failure;
 
 	if (rule->suppress_ifgroup != -1) {

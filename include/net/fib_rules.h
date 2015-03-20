@@ -17,7 +17,8 @@ struct fib_rule {
 	u32			flags;
 	u32			table;
 	u8			action;
-	/* 3 bytes hole, try to use */
+	u8			reason;
+	/* 2 bytes hole, try to use */
 	u32			target;
 	struct fib_rule __rcu	*ctarget;
 	struct net		*fr_net;
@@ -35,8 +36,9 @@ struct fib_lookup_arg {
 	void			*lookup_ptr;
 	void			*result;
 	struct fib_rule		*rule;
-	int			flags;
+	u8			flags;
 #define FIB_LOOKUP_NOREF	1
+	u8			reason;
 };
 
 struct fib_rules_ops {
@@ -88,7 +90,8 @@ struct fib_rules_ops {
 	[FRA_TABLE]     = { .type = NLA_U32 }, \
 	[FRA_SUPPRESS_PREFIXLEN] = { .type = NLA_U32 }, \
 	[FRA_SUPPRESS_IFGROUP] = { .type = NLA_U32 }, \
-	[FRA_GOTO]	= { .type = NLA_U32 }
+	[FRA_GOTO]	= { .type = NLA_U32 }, \
+	[FRA_REASON]	= { .type = NLA_U32 }
 
 static inline void fib_rule_get(struct fib_rule *rule)
 {
