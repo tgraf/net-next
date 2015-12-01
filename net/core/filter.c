@@ -1834,6 +1834,17 @@ static u32 bpf_net_convert_ctx_access(enum bpf_access_type type, int dst_reg,
 				      offsetof(struct net_device, ifindex));
 		break;
 
+	case offsetof(struct __sk_buff, ifgroup):
+		BUILD_BUG_ON(FIELD_SIZEOF(struct net_device, group) != 4);
+
+		*insn++ = BPF_LDX_MEM(bytes_to_bpf_size(FIELD_SIZEOF(struct sk_buff, dev)),
+				      dst_reg, src_reg,
+				      offsetof(struct sk_buff, dev));
+		*insn++ = BPF_JMP_IMM(BPF_JEQ, dst_reg, 0, 1);
+		*insn++ = BPF_LDX_MEM(BPF_W, dst_reg, dst_reg,
+				      offsetof(struct net_device, group));
+		break;
+
 	case offsetof(struct __sk_buff, hash):
 		BUILD_BUG_ON(FIELD_SIZEOF(struct sk_buff, hash) != 4);
 
