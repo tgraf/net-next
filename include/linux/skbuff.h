@@ -2805,6 +2805,13 @@ static inline void skb_postpull_rcsum(struct sk_buff *skb,
 
 unsigned char *skb_pull_rcsum(struct sk_buff *skb, unsigned int len);
 
+static inline void skb_postpush_rcsum(struct sk_buff *skb,
+				      const void *start, unsigned int len)
+{
+	if (skb->ip_summed == CHECKSUM_COMPLETE)
+		skb->csum = csum_add(skb->csum, csum_partial(start, len, 0));
+}
+
 /**
  *	pskb_trim_rcsum - trim received skb and update checksum
  *	@skb: buffer to trim
