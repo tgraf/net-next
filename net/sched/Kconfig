@@ -310,15 +310,16 @@ config NET_SCH_PIE
 	  If unsure, say N.
 
 config NET_SCH_INGRESS
-	tristate "Ingress Qdisc"
+	tristate "Ingress/Classifier-only Qdisc"
 	depends on NET_CLS_ACT
 	select NET_INGRESS
+	select NET_EGRESS
 	---help---
-	  Say Y here if you want to use classifiers for incoming packets.
-	  If unsure, say Y.
+	  Say Y here if you want to use classifiers for incoming(/outgoing)
+	  packets. If unsure, say Y.
 
-	  To compile this code as a module, choose M here: the
-	  module will be called sch_ingress.
+	  To compile this code as a module, choose M here: the module will
+	  be called sch_ingress.
 
 config NET_SCH_PLUG
 	tristate "Plug network traffic until release (PLUG)"
