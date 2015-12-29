@@ -48,22 +48,24 @@ struct Qdisc {
 	int 			(*enqueue)(struct sk_buff *skb, struct Qdisc *dev);
 	struct sk_buff *	(*dequeue)(struct Qdisc *dev);
 	unsigned int		flags;
-#define TCQ_F_BUILTIN		1
-#define TCQ_F_INGRESS		2
-#define TCQ_F_CAN_BYPASS	4
-#define TCQ_F_MQROOT		8
-#define TCQ_F_ONETXQUEUE	0x10 /* dequeue_skb() can assume all skbs are for
+#define TCQ_F_BUILTIN		(1 << 0)
+#define TCQ_F_CLSONLY		(1 << 1) /* fake qdisc, only holds/runs classifiers */
+#define TCQ_F_CAN_BYPASS	(1 << 2)
+#define TCQ_F_MQROOT		(1 << 3)
+#define TCQ_F_ONETXQUEUE	(1 << 4)
+				     /* dequeue_skb() can assume all skbs are for
 				      * q->dev_queue : It can test
 				      * netif_xmit_frozen_or_stopped() before
 				      * dequeueing next packet.
 				      * Its true for MQ/MQPRIO slaves, or non
 				      * multiqueue device.
 				      */
-#define TCQ_F_WARN_NONWC	(1 << 16)
-#define TCQ_F_CPUSTATS		0x20 /* run using percpu statistics */
-#define TCQ_F_NOPARENT		0x40 /* root of its hierarchy :
+#define TCQ_F_CPUSTATS		(1 << 5) /* run using percpu statistics */
+#define TCQ_F_NOPARENT		(1 << 6)
+				     /* root of its hierarchy :
 				      * qdisc_tree_decrease_qlen() should stop.
 				      */
+#define TCQ_F_WARN_NONWC	(1 << 16)
 	u32			limit;
 	const struct Qdisc_ops	*ops;
 	struct qdisc_size_table	__rcu *stab;

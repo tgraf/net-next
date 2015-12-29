@@ -274,7 +274,7 @@ static struct Qdisc *qdisc_match_from_root(struct Qdisc *root, u32 handle)
 
 void qdisc_list_add(struct Qdisc *q)
 {
-	if ((q->parent != TC_H_ROOT) && !(q->flags & TCQ_F_INGRESS)) {
+	if ((q->parent != TC_H_ROOT) && !(q->flags & TCQ_F_CLSONLY)) {
 		struct Qdisc *root = qdisc_dev(q)->qdisc;
 
 		WARN_ON_ONCE(root == &noop_qdisc);
@@ -286,7 +286,7 @@ EXPORT_SYMBOL(qdisc_list_add);
 
 void qdisc_list_del(struct Qdisc *q)
 {
-	if ((q->parent != TC_H_ROOT) && !(q->flags & TCQ_F_INGRESS)) {
+	if ((q->parent != TC_H_ROOT) && !(q->flags & TCQ_F_CLSONLY)) {
 		ASSERT_RTNL();
 		list_del_rcu(&q->list);
 	}
@@ -812,8 +812,8 @@ static int qdisc_graft(struct net_device *dev, struct Qdisc *parent,
 		bool clq = false;
 
 		num_q = dev->num_tx_queues;
-		if ((q && q->flags & TCQ_F_INGRESS) ||
-		    (new && new->flags & TCQ_F_INGRESS)) {
+		if ((q && q->flags & TCQ_F_CLSONLY) ||
+		    (new && new->flags & TCQ_F_CLSONLY)) {
 			num_q = 1;
 			clq = true;
 
@@ -938,7 +938,7 @@ qdisc_create(struct net_device *dev, struct netdev_queue *dev_queue,
 	sch->parent = parent;
 
 	if (handle == TC_H_INGRESS) {
-		sch->flags |= TCQ_F_INGRESS;
+		sch->flags |= TCQ_F_CLSONLY;
 		handle = TC_H_MAKE(TC_H_INGRESS, 0);
 		lockdep_set_class(qdisc_lock(sch), &qdisc_rx_lock);
 	} else {
@@ -983,7 +983,7 @@ qdisc_create(struct net_device *dev, struct netdev_queue *dev_queue,
 				goto err_out4;
 
 			if ((sch->parent != TC_H_ROOT) &&
-			    !(sch->flags & TCQ_F_INGRESS) &&
+			    !(sch->flags & TCQ_F_CLSONLY) &&
 			    (!p || !(p->flags & TCQ_F_MQROOT)))
 				root_lock = qdisc_root_sleeping_lock(sch);
 			else
