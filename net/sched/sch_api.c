@@ -301,10 +301,9 @@ struct Qdisc *qdisc_lookup(struct net_device *dev, u32 handle)
 	if (q)
 		goto out;
 
-	if (dev_ingress_queue(dev))
-		q = qdisc_match_from_root(
-			dev_ingress_queue(dev)->qdisc_sleeping,
-			handle);
+	if (dev_cl_queue(dev))
+		q = qdisc_match_from_root(dev_cl_queue(dev)->qdisc_sleeping,
+					  handle);
 out:
 	return q;
 }
@@ -809,15 +808,16 @@ static int qdisc_graft(struct net_device *dev, struct Qdisc *parent,
 	int err = 0;
 
 	if (parent == NULL) {
-		unsigned int i, num_q, ingress;
+		unsigned int i, num_q;
+		bool clq = false;
 
-		ingress = 0;
 		num_q = dev->num_tx_queues;
 		if ((q && q->flags & TCQ_F_INGRESS) ||
 		    (new && new->flags & TCQ_F_INGRESS)) {
 			num_q = 1;
-			ingress = 1;
-			if (!dev_ingress_queue(dev))
+			clq = true;
+
+			if (!dev_cl_queue(dev))
 				return -ENOENT;
 		}
 
@@ -828,21 +828,21 @@ static int qdisc_graft(struct net_device *dev, struct Qdisc *parent,
 			goto skip;
 
 		for (i = 0; i < num_q; i++) {
-			struct netdev_queue *dev_queue = dev_ingress_queue(dev);
+			struct netdev_queue *dev_queue = dev_cl_queue(dev);
 
-			if (!ingress)
+			if (!clq)
 				dev_queue = netdev_get_tx_queue(dev, i);
 
 			old = dev_graft_qdisc(dev_queue, new);
 			if (new && i > 0)
 				atomic_inc(&new->refcnt);
 
-			if (!ingress)
+			if (!clq)
 				qdisc_destroy(old);
 		}
 
 skip:
-		if (!ingress) {
+		if (!clq) {
 			notify_and_destroy(net, skb, n, classid,
 					   dev->qdisc, new);
 			if (new && !new->ops->attach)
@@ -1136,8 +1136,8 @@ static int tc_get_qdisc(struct sk_buff *skb, struct nlmsghdr *n)
 				if (!p)
 					return -ENOENT;
 				q = qdisc_leaf(p, clid);
-			} else if (dev_ingress_queue(dev)) {
-				q = dev_ingress_queue(dev)->qdisc_sleeping;
+			} else if (dev_cl_queue(dev)) {
+				q = dev_cl_queue(dev)->qdisc_sleeping;
 			}
 		} else {
 			q = dev->qdisc;
@@ -1209,8 +1209,8 @@ replay:
 				if (!p)
 					return -ENOENT;
 				q = qdisc_leaf(p, clid);
-			} else if (dev_ingress_queue_create(dev)) {
-				q = dev_ingress_queue(dev)->qdisc_sleeping;
+			} else if (dev_cl_queue_create(dev)) {
+				q = dev_cl_queue(dev)->qdisc_sleeping;
 			}
 		} else {
 			q = dev->qdisc;
@@ -1291,8 +1291,8 @@ create_n_graft:
 	if (!(n->nlmsg_flags & NLM_F_CREATE))
 		return -ENOENT;
 	if (clid == TC_H_INGRESS) {
-		if (dev_ingress_queue(dev))
-			q = qdisc_create(dev, dev_ingress_queue(dev), p,
+		if (dev_cl_queue(dev))
+			q = qdisc_create(dev, dev_cl_queue(dev), p,
 					 tcm->tcm_parent, tcm->tcm_parent,
 					 tca, &err);
 		else
@@ -1491,7 +1491,7 @@ static int tc_dump_qdisc(struct sk_buff *skb, struct netlink_callback *cb)
 		if (tc_dump_qdisc_root(dev->qdisc, skb, cb, &q_idx, s_q_idx) < 0)
 			goto done;
 
-		dev_queue = dev_ingress_queue(dev);
+		dev_queue = dev_cl_queue(dev);
 		if (dev_queue &&
 		    tc_dump_qdisc_root(dev_queue->qdisc_sleeping, skb, cb,
 				       &q_idx, s_q_idx) < 0)
@@ -1798,7 +1798,7 @@ static int tc_dump_tclass(struct sk_buff *skb, struct netlink_callback *cb)
 	if (tc_dump_tclass_root(dev->qdisc, skb, tcm, cb, &t, s_t) < 0)
 		goto done;
 
-	dev_queue = dev_ingress_queue(dev);
+	dev_queue = dev_cl_queue(dev);
 	if (dev_queue &&
 	    tc_dump_tclass_root(dev_queue->qdisc_sleeping, skb, tcm, cb,
 				&t, s_t) < 0)

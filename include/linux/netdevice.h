@@ -1476,7 +1476,7 @@ enum netdev_priv_flags {
  *
  *	@rx_handler:		handler for received packets
  *	@rx_handler_data: 	XXX: need comments on this one
- *	@ingress_queue:		XXX: need comments on this one
+ *	@cl_queue:		dummy queue for holding classifier
  *	@broadcast:		hw bcast address
  *
  *	@rx_cpu_rmap:	CPU reverse-mapping for RX completion interrupts,
@@ -1714,7 +1714,7 @@ struct net_device {
 #ifdef CONFIG_NET_CLS_ACT
 	struct tcf_proto __rcu  *ingress_cl_list;
 #endif
-	struct netdev_queue __rcu *ingress_queue;
+	struct netdev_queue __rcu *cl_queue;
 #ifdef CONFIG_NETFILTER_INGRESS
 	struct list_head	nf_hooks_ingress;
 #endif

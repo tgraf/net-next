@@ -72,12 +72,12 @@ static inline bool lockdep_rtnl_is_held(void)
 #define rtnl_dereference(p)					\
 	rcu_dereference_protected(p, lockdep_rtnl_is_held())
 
-static inline struct netdev_queue *dev_ingress_queue(struct net_device *dev)
+static inline struct netdev_queue *dev_cl_queue(struct net_device *dev)
 {
-	return rtnl_dereference(dev->ingress_queue);
+	return rtnl_dereference(dev->cl_queue);
 }
 
-struct netdev_queue *dev_ingress_queue_create(struct net_device *dev);
+struct netdev_queue *dev_cl_queue_create(struct net_device *dev);
 
 #ifdef CONFIG_NET_INGRESS
 void net_inc_ingress_queue(void);

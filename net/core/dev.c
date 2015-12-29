@@ -7230,20 +7230,22 @@ struct rtnl_link_stats64 *dev_get_stats(struct net_device *dev,
 }
 EXPORT_SYMBOL(dev_get_stats);
 
-struct netdev_queue *dev_ingress_queue_create(struct net_device *dev)
+struct netdev_queue *dev_cl_queue_create(struct net_device *dev)
 {
-	struct netdev_queue *queue = dev_ingress_queue(dev);
+	struct netdev_queue *queue = dev_cl_queue(dev);
 
 #ifdef CONFIG_NET_CLS_ACT
 	if (queue)
 		return queue;
+
 	queue = kzalloc(sizeof(*queue), GFP_KERNEL);
 	if (!queue)
 		return NULL;
+
 	netdev_init_one_queue(dev, queue, NULL);
 	RCU_INIT_POINTER(queue->qdisc, &noop_qdisc);
 	queue->qdisc_sleeping = &noop_qdisc;
-	rcu_assign_pointer(dev->ingress_queue, queue);
+	rcu_assign_pointer(dev->cl_queue, queue);
 #endif
 	return queue;
 }
@@ -7404,7 +7406,7 @@ void free_netdev(struct net_device *dev)
 	kvfree(dev->_rx);
 #endif
 
-	kfree(rcu_dereference_protected(dev->ingress_queue, 1));
+	kfree(rcu_dereference_protected(dev->cl_queue, 1));
 
 	/* Flush device addresses */
 	dev_addr_flush(dev);
