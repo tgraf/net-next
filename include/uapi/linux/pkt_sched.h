@@ -71,7 +71,8 @@ struct tc_estimator {
 
 #define TC_H_UNSPEC	(0U)
 #define TC_H_ROOT	(0xFFFFFFFFU)
-#define TC_H_INGRESS    (0xFFFFFFF1U)
+#define TC_H_INGRESS	(0xFFFFFFF1U)
+#define TC_H_CLSONLY	TC_H_INGRESS
 
 /* Need to corrospond to iproute2 tc/tc_core.h "enum link_layer" */
 enum tc_link_layer {

@@ -755,7 +755,7 @@ void qdisc_tree_decrease_qlen(struct Qdisc *sch, unsigned int n)
 	drops = max_t(int, n, 0);
 	rcu_read_lock();
 	while ((parentid = sch->parent)) {
-		if (TC_H_MAJ(parentid) == TC_H_MAJ(TC_H_INGRESS))
+		if (TC_H_MAJ(parentid) == TC_H_MAJ(TC_H_CLSONLY))
 			break;
 
 		if (sch->flags & TCQ_F_NOPARENT)
@@ -937,9 +937,9 @@ qdisc_create(struct net_device *dev, struct netdev_queue *dev_queue,
 
 	sch->parent = parent;
 
-	if (handle == TC_H_INGRESS) {
+	if (handle == TC_H_CLSONLY) {
 		sch->flags |= TCQ_F_CLSONLY;
-		handle = TC_H_MAKE(TC_H_INGRESS, 0);
+		handle = TC_H_MAKE(TC_H_CLSONLY, 0);
 		lockdep_set_class(qdisc_lock(sch), &qdisc_rx_lock);
 	} else {
 		if (handle == 0) {
@@ -1131,7 +1131,7 @@ static int tc_get_qdisc(struct sk_buff *skb, struct nlmsghdr *n)
 	clid = tcm->tcm_parent;
 	if (clid) {
 		if (clid != TC_H_ROOT) {
-			if (TC_H_MAJ(clid) != TC_H_MAJ(TC_H_INGRESS)) {
+			if (TC_H_MAJ(clid) != TC_H_MAJ(TC_H_CLSONLY)) {
 				p = qdisc_lookup(dev, TC_H_MAJ(clid));
 				if (!p)
 					return -ENOENT;
@@ -1204,7 +1204,7 @@ replay:
 
 	if (clid) {
 		if (clid != TC_H_ROOT) {
-			if (clid != TC_H_INGRESS) {
+			if (clid != TC_H_CLSONLY) {
 				p = qdisc_lookup(dev, TC_H_MAJ(clid));
 				if (!p)
 					return -ENOENT;
@@ -1290,7 +1290,7 @@ replay:
 create_n_graft:
 	if (!(n->nlmsg_flags & NLM_F_CREATE))
 		return -ENOENT;
-	if (clid == TC_H_INGRESS) {
+	if (clid == TC_H_CLSONLY) {
 		if (dev_cl_queue(dev))
 			q = qdisc_create(dev, dev_cl_queue(dev), p,
 					 tcm->tcm_parent, tcm->tcm_parent,
