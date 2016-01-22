@@ -1977,6 +1977,12 @@ static u32 bpf_net_convert_ctx_access(enum bpf_access_type type, int dst_reg,
 			*insn++ = BPF_MOV64_IMM(dst_reg, 0);
 		break;
 #endif
+	case offsetof(struct __sk_buff, csum):
+		BUILD_BUG_ON(FIELD_SIZEOF(struct sk_buff, csum) != 4);
+
+		*insn++ = BPF_LDX_MEM(BPF_W, dst_reg, src_reg,
+				      offsetof(struct sk_buff, csum));
+		break;
 	}
 
 	return insn - insn_buf;
