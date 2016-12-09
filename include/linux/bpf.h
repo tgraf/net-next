@@ -203,7 +203,7 @@ struct bpf_array {
 	};
 };
 
-#define MAX_TAIL_CALL_CNT 32
+#define MAX_TAIL_CALL_CNT 16384
 
 struct bpf_event_entry {
 	struct perf_event *event;
